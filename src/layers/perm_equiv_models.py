@@ -273,13 +273,11 @@ class Eq2to2(nn.Module):
         self.basis_dim = 6
 
         self.alphas = nn.ParameterList([None] * len(config))
-        self.dummy_alphas = torch.zeros(1, in_dim, 5, 1, 1, device=device, dtype=dtype)
+        self.dummy_alphas = torch.zeros(in_dim, device=device, dtype=dtype)
         # countM = 0
         for i, char in enumerate(config):
-            if char in ['M', 'X', 'N']:
-                self.alphas[i] = nn.Parameter(torch.rand(1, in_dim, 11 if folklore else 10,  1, 1, device=device, dtype=dtype))
-            elif char=='S':
-                self.alphas[i] = nn.Parameter(torch.rand(1, in_dim, 11 if folklore else 10,  1, 1, device=device, dtype=dtype))
+            if char in ['M', 'X', 'N', 'S']:
+                self.alphas[i] = nn.Parameter(torch.rand(in_dim, 5, device=device, dtype=dtype))
 
         self.out_dim = out_dim
         self.in_dim = in_dim
@@ -310,9 +308,10 @@ class Eq2to2(nn.Module):
                 op = self.ops_func(inputs, nobj, self.average_nobj, aggregation=d[char.lower()], weight=irc_weight, skip_order_zero=False if i==0 else True, folklore = self.folklore)
                 if char in ['S', 'M', 'X', 'N']:
                     if i==0:
-                        alphas = torch.cat([self.dummy_alphas, self.alphas[0]], dim=2)
+                        alphas = torch.cat([self.dummy_alphas.view(1,self.in_dim,1,1,1), self.alphas[0].view(1,self.in_dim,5,1,1)], dim=2)
                     else:
-                        alphas = self.alphas[i]
+                        alphas = self.alphas[i].view(1,self.in_dim,6,1,1)
+                    
                     mult = (nobj).view([-1,1,1,1,1])**alphas
                     mult = mult / (self.average_nobj**alphas)
                     op = op * mult
