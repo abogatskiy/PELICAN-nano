@@ -43,10 +43,8 @@ class Eq2to0(nn.Module):
         self.basis_dim = 2 * len(config)
         self.alphas = nn.ParameterList([None] * len(config))
         for i, char in enumerate(config):
-            if char in ['M', 'X', 'N']:
-                self.alphas[i] = nn.Parameter(torch.rand(1, in_dim, 2, device=device, dtype=dtype))
-            elif char=='S':
-                self.alphas[i] = nn.Parameter(torch.rand(1, in_dim, 2, device=device, dtype=dtype))
+            if char in ['M', 'X', 'N', 'S']:
+                self.alphas[i] = nn.Parameter(torch.rand(in_dim, 2, device=device, dtype=dtype))
 
         self.out_dim = out_dim
         self.in_dim = in_dim
@@ -75,8 +73,8 @@ class Eq2to0(nn.Module):
                 op = self.ops_func(inputs, nobj=nobj, nobj_avg=self.average_nobj, aggregation=d[char], weight=irc_weight)
             elif char in ['S', 'M', 'X', 'N']:
                 op = self.ops_func(inputs, nobj=nobj, nobj_avg=self.average_nobj, aggregation=d[char.lower()], weight=irc_weight)
-                mult = (nobj).view([-1,1,1])**self.alphas[i]
-                mult = mult / (self.average_nobj** self.alphas[i])
+                mult = (nobj).view([-1,1,1])**self.alphas[i].view(1,self.in_dim,2)
+                mult = mult / (self.average_nobj** self.alphas[i].view(1,self.in_dim,2))
                 op = op * mult            
             else:
                 raise ValueError("args.config must consist of the following letters: smxnSMXN", self.config)
